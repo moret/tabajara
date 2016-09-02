@@ -12,6 +12,15 @@ import {
   View
 } from 'react-native';
 
+import { Lokka } from 'lokka';
+import { Transport } from 'lokka-transport-http';
+
+const client = new Lokka({
+  transport: new Transport(
+    'http://dev.descomplica.com.br:3000/graphql'
+  )
+});
+
 fakeDisciplinesApi = [
   {
     name: 'Biologia',
@@ -35,20 +44,36 @@ class tabajara extends Component {
       disciplines: [],
       loading: true
     };
-    setTimeout(this.loadDisciplines, 600);
   }
 
-  loadDisciplines = () => {
+  componentDidMount() {
+    client.query(`{
+      chimera {
+        navigation(slug: "mobile") {
+          slug
+          disciplines {
+            name
+            slug
+            bannerTextColor
+            bannerBgColor
+          }
+        }
+      }
+    }`).then(this.loadDisciplines);
+  }
+
+  loadDisciplines = (result) => {
+    const disciplines = result.chimera.navigation.disciplines;
     const disciplinesStyles = {};
-    fakeDisciplinesApi.forEach(discipline => {
+    disciplines.forEach(discipline => {
       disciplinesStyles[discipline.slug] = {
-        color: discipline.textColor,
-        backgroundColor: discipline.backgroundColor
+        color: discipline.bannerTextColor,
+        backgroundColor: discipline.bannerBgColor
       };
     });
     this.disciplinesStyles = StyleSheet.create(disciplinesStyles);
     this.setState({
-      disciplines: fakeDisciplinesApi,
+      disciplines: disciplines,
       loading: false
     });
   };
