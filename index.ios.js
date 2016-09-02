@@ -1,135 +1,52 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component } from 'react';
 import {
   AppRegistry,
-  StyleSheet,
-  Text,
-  View
+  Navigator,
+  Text
 } from 'react-native';
 
-import { Lokka } from 'lokka';
-import { Transport } from 'lokka-transport-http';
-
-const client = new Lokka({
-  transport: new Transport(
-    'http://dev.descomplica.com.br:3000/graphql'
-  )
-});
-
-fakeDisciplinesApi = [
-  {
-    name: 'Biologia',
-    slug: 'biologia',
-    textColor: '#34474c',
-    backgroundColor: '#fce74f'
-  },
-  {
-    name: 'Química',
-    slug: 'quimica',
-    textColor: '#ffffff',
-    backgroundColor: '#175782'
-  }
-];
+import DisciplinesScene from './app/disciplines-scene';
+import DisciplineScene from './app/discipline-scene';
 
 class tabajara extends Component {
   constructor(props) {
     super(props);
-    this.disciplinesStyles = null;
     this.state = {
-      disciplines: [],
-      loading: true
+      disciplineSlug: null
     };
   }
 
-  componentDidMount() {
-    client.query(`{
-      chimera {
-        navigation(slug: "mobile") {
-          slug
-          disciplines {
-            name
-            slug
-            bannerTextColor
-            bannerBgColor
-          }
-        }
-      }
-    }`).then(this.loadDisciplines);
-  }
-
-  loadDisciplines = (result) => {
-    const disciplines = result.chimera.navigation.disciplines;
-    const disciplinesStyles = {};
-    disciplines.forEach(discipline => {
-      disciplinesStyles[discipline.slug] = {
-        color: discipline.bannerTextColor,
-        backgroundColor: discipline.bannerBgColor
-      };
-    });
-    this.disciplinesStyles = StyleSheet.create(disciplinesStyles);
-    this.setState({
-      disciplines: disciplines,
-      loading: false
-    });
-  };
-
   render() {
     return (
-      <View style={styles.container}>
-        {this.renderLoading()}
-        {this.renderDisciplines()}
-      </View>
+      <Navigator
+        initialRoute={{name: 'Disciplines'}}
+        renderScene={(route, navigator) => {
+          if (route.name == 'Disciplines') {
+            return (
+              <DisciplinesScene
+                onSelected={disciplineSlug => {
+                  navigator.push({
+                    name: 'Discipline',
+                    slug: disciplineSlug
+                  })
+                }}
+              />
+            );
+          }
+          if (route.name == 'Discipline') {
+            return (
+              <DisciplineScene
+                slug={route.slug}
+                onBack={() => {
+                  navigator.pop();
+                }}
+              />
+            );
+          }
+        }}
+      />
     );
   }
-
-  renderLoading = () => {
-    if (this.state.loading) {
-      return (
-        <Text style={styles.loading}>
-          A carregar...
-        </Text>
-      );
-    }
-  };
-
-  renderDisciplines = () => {
-    if (this.state.disciplines.length) {
-      return this.state.disciplines.map(discipline => (
-        <Text
-          key={discipline.slug}
-          style={[
-            styles.discipline,
-            this.disciplinesStyles[discipline.slug]
-          ]}
-        >
-          {discipline.name}
-        </Text>
-      ));
-    }
-  };
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  loading: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  discipline: {
-    textAlign: 'center',
-    marginBottom: 5,
-  }
-});
 
 AppRegistry.registerComponent('tabajara', () => tabajara);
